@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ziad Sayed Ahmed - Data Science &amp; AI</title>
+<meta name="description" content="Portfolio of Ziad Sayed Ahmed, a Data Science and AI student in Cairo. Walk the loss landscape to explore his experience, projects, and skills.">
+<meta property="og:title" content="Ziad Sayed Ahmed - Data Science &amp; AI">
+<meta property="og:description" content="An explorable portfolio: machine learning models, BI dashboards, and full-stack apps.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0E2233">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='%23FFB627' stroke='%230E2233' stroke-width='5'/%3E%3Ccircle cx='24' cy='30' r='4' fill='%230E2233'/%3E%3Ccircle cx='40' cy='30' r='4' fill='%230E2233'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E4ECEA; --ink:#0E2233; --ink-2:#173248;
+  --gold:#FFB627; --rose:#F0506E; --teal:#12A08A;
+  --wall:#FBFCFA; --on-ink:#EAF1EF; --dim:#9DB4BC;
+  --pad:clamp(12px,2vw,26px);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--ink); color:var(--ink);
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--rose);outline-offset:3px}
+.doc :focus-visible{outline-color:var(--gold)}
+
+#world{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+
+/* ---------- sticker style shared by HUD ---------- */
+.sticker{background:var(--wall);border:2.5px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink)}
+
+.hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+.hud>*{pointer-events:auto;transition:opacity .4s}
+body:not(.playing) .plate,body:not(.playing) .actions,body:not(.playing) .loss{opacity:0;pointer-events:none}
+.plate{position:absolute;top:var(--pad);left:var(--pad);padding:8px 14px;line-height:1.15}
+.plate b{display:block;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
+.plate span{font-size:.85rem;opacity:.75}
+.actions{position:absolute;top:var(--pad);right:var(--pad);display:flex;gap:10px}
+.chip{padding:9px 14px;font-weight:700;font-size:.92rem;transition:transform .12s,box-shadow .12s}
+.chip:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
+.chip b{background:var(--gold);border:2px solid var(--ink);border-radius:8px;padding:0 7px;margin-left:6px;font-weight:800}
+
+.loss{position:absolute;left:var(--pad);bottom:calc(var(--pad) + env(safe-area-inset-bottom,0px));width:236px;padding:12px 14px 12px}
+.loss-head{display:flex;justify-content:space-between;align-items:baseline;font-weight:600;font-size:.9rem}
+.loss-head b{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#spark{display:block;width:208px;height:60px;margin:4px 0 6px}
+.loss-note{font-size:.82rem;opacity:.8;margin:0 0 8px}
+.legend{height:8px;border:2px solid var(--ink);border-radius:5px;background:linear-gradient(90deg,#F0506E,#E4ECEA 50%,#12A08A)}
+.legend-cap{display:flex;justify-content:space-between;font-size:.72rem;opacity:.75;margin-top:3px}
+
+.prompt{position:absolute;left:50%;bottom:calc(var(--pad) + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--gold);border:2.5px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);
+  padding:11px 18px;font-weight:800;font-size:1rem;display:flex;gap:10px;align-items:center;white-space:nowrap}
+.prompt[hidden]{display:none}
+.prompt kbd{background:var(--ink);color:var(--gold);border-radius:6px;padding:1px 8px;font:700 .9rem 'Silkscreen',monospace}
+.toast{position:absolute;left:50%;top:var(--pad);transform:translate(-50%,-14px);background:var(--ink);color:var(--on-ink);
+  border-radius:12px;padding:10px 16px;font-weight:600;font-size:.95rem;opacity:0;visibility:hidden;
+  transition:opacity .25s,transform .25s,visibility 0s .25s;max-width:min(92vw,460px);text-align:center;pointer-events:none}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .25s,transform .25s}
+
+/* ---------- intro ---------- */
+.intro{position:fixed;inset:0;z-index:30;display:flex;align-items:center;padding:var(--pad);
+  background:linear-gradient(90deg,rgba(228,236,234,.96) 0%,rgba(228,236,234,.88) 36%,rgba(228,236,234,0) 66%);
+  transition:opacity .5s,visibility 0s 0s}
+.intro.gone{opacity:0;visibility:hidden;transition:opacity .5s,visibility 0s .5s}
+.intro-card{max-width:540px;padding:clamp(6px,3vw,44px)}
+.intro h1{font-size:clamp(3.1rem,8.4vw,6.4rem);font-weight:800;line-height:.9;letter-spacing:-.035em;margin:0 0 20px}
+.intro .lead{font-size:clamp(1.05rem,2vw,1.3rem);line-height:1.45;margin:0 0 26px;max-width:32ch;font-weight:500}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.btn{padding:13px 22px;font-weight:800;font-size:1.02rem;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink)}
+.btn.primary{background:var(--gold)}
+.fine{font-size:.9rem;opacity:.75;margin:0;max-width:44ch;line-height:1.45}
+@media (max-width:720px){
+  .intro{align-items:flex-end;background:linear-gradient(0deg,rgba(228,236,234,.97) 58%,rgba(228,236,234,0))}
+  .loss{width:176px;padding:9px 11px}
+  #spark{width:154px;height:44px}
+  .loss-note,.legend-cap{display:none}
+  .prompt{left:auto;right:var(--pad);transform:none;bottom:calc(var(--pad) + env(safe-area-inset-bottom,0px));
+    max-width:calc(100% - 176px - 3*var(--pad));white-space:normal;padding:9px 12px;font-size:.92rem;line-height:1.15}
+  .toast{top:calc(var(--pad) + 58px)}
+  .plate{display:none}
+  .chip{padding:8px 11px;font-size:.85rem}
+}
+
+/* ---------- panel + classic (shared "doc" look) ---------- */
+#scrim{position:fixed;inset:0;background:rgba(14,34,51,.35);z-index:35;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+#scrim.show{opacity:1;visibility:visible;transition:opacity .3s}
+#panel:focus,#classic:focus{outline:none}
+#panel{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);z-index:40;overflow-y:auto;overscroll-behavior:contain;
+  padding:34px clamp(20px,4vw,36px) 56px;transform:translateX(104%);visibility:hidden;
+  box-shadow:-18px 0 50px rgba(14,34,51,.35);transition:transform .38s cubic-bezier(.2,.8,.2,1),visibility 0s .38s}
+#panel.open{transform:none;visibility:visible;transition:transform .38s cubic-bezier(.2,.8,.2,1)}
+#panelClose{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:12px;background:transparent;border:2px solid rgba(234,241,239,.35);font-size:1.4rem;line-height:1}
+#panelClose:hover{border-color:var(--gold)}
+.doc{background:var(--ink);color:var(--on-ink)}
+.doc h2{margin:0 0 6px;font-size:clamp(1.9rem,4.6vw,2.6rem);line-height:1.02;letter-spacing:-.025em;font-weight:800;color:#fff;padding-right:44px}
+.doc .sub{color:var(--gold);font-weight:600;margin:0 0 26px}
+.doc p{line-height:1.6;margin:0 0 14px}
+.doc a{color:inherit}
+.lead{font-size:1.2rem;line-height:1.45!important;font-weight:500}
+.doc blockquote{margin:22px 0;padding:0 0 0 16px;border-left:4px solid var(--gold);font-size:1.15rem;font-weight:500;line-height:1.4}
+.entry{padding:20px 0;border-top:1px solid rgba(234,241,239,.16)}
+.entry h3,.project h3{margin:0;font-size:1.2rem;font-weight:700}
+.entry .when{color:var(--dim);font-size:.92rem;margin:2px 0 10px}
+.doc ul.points{margin:0 0 4px;padding-left:1.1em}
+.doc ul.points li{margin:0 0 9px;line-height:1.55}
+.doc h4{margin:24px 0 10px;font-size:1.02rem;font-weight:700;color:#fff}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.tag{border:1.5px solid rgba(234,241,239,.32);border-radius:999px;padding:2px 11px;font-size:.85rem}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin:24px 0 8px}
+.facts dt{color:var(--dim)}
+.facts dd{margin:0}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px 0}
+.kpi{background:var(--ink-2);border-radius:10px;padding:12px 14px}
+.kpi b{display:block;font-size:1.75rem;font-weight:800;color:var(--gold);letter-spacing:-.02em}
+.kpi span{color:var(--dim);font-size:.88rem}
+.shot{margin:18px 0}
+.shot img{display:block;width:100%;height:auto;border-radius:8px;border:2px solid var(--ink-2)}
+.shot figcaption{font-size:.85rem;color:var(--dim);margin-top:6px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.tab{background:transparent;border:2px solid rgba(234,241,239,.28);border-radius:10px;padding:6px 12px;font-size:.9rem;font-weight:600}
+.tab:hover{border-color:var(--gold)}
+.tab[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.linkbtn{display:inline-block;background:var(--gold);color:var(--ink)!important;font-weight:700;border-radius:10px;padding:11px 18px;text-decoration:none;margin:0 10px 10px 0}
+.linkbtn.ghost{background:transparent;color:var(--on-ink)!important;border:2px solid rgba(234,241,239,.35);padding:9px 16px}
+.linkbtn:hover{filter:brightness(1.08)}
+.linkbtn.ghost:hover{border-color:var(--gold)}
+.inv-group{margin:0 0 22px}
+.skills{display:flex;flex-wrap:wrap;gap:8px}
+.skill{display:inline-flex;align-items:center;gap:8px;border:1.5px solid rgba(234,241,239,.22);border-radius:10px;padding:5px 12px;color:var(--dim)}
+.skill i{width:10px;height:10px;border-radius:50%;background:#3A566B}
+.skill.on{color:var(--on-ink);border-color:rgba(255,182,39,.6)}
+.skill.on i{background:var(--gold)}
+
+#classic{position:fixed;inset:0;z-index:50;overflow-y:auto;visibility:hidden;opacity:0;transition:opacity .3s,visibility 0s .3s}
+#classic.open{visibility:visible;opacity:1;transition:opacity .3s}
+.classic-bar{position:sticky;top:0;z-index:2;background:var(--ink);border-bottom:1px solid rgba(234,241,239,.16);padding:12px var(--pad);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.classic-bar b{font-weight:800}
+.classic-bar button{background:var(--gold);color:var(--ink);border:0;border-radius:10px;padding:9px 16px;font-weight:800}
+#classicBody{max-width:760px;margin:0 auto;padding:20px var(--pad) 80px}
+#classicBody section{padding:44px 0 8px;border-top:1px solid rgba(234,241,239,.16)}
+#classicBody section:first-child{border-top:0}
+#classicBody .project{padding:22px 0;border-top:1px solid rgba(234,241,239,.16)}
+.skip{position:fixed;left:8px;top:-60px;z-index:100;background:var(--gold);color:var(--ink);padding:10px 14px;border-radius:8px;font-weight:800;text-decoration:none}
+.skip:focus{top:8px}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#" id="skipLink">Skip the game and read the plain version</a>
+
+<canvas id="world" tabindex="0" role="img" aria-label="Interactive map of Ziad's portfolio. Walk with the arrow keys or WASD. A plain text version is available from the Plain version button."></canvas>
+
+<div class="hud" id="hud">
+  <div class="plate sticker"><b>Ziad Sayed Ahmed</b><span>Data Science &amp; AI</span></div>
+  <div class="actions">
+    <button class="chip sticker" id="btnSkills" type="button">Skills<b id="skillCount">0/16</b></button>
+    <button class="chip sticker" id="btnClassic" type="button">Plain version</button>
+  </div>
+  <div class="loss sticker" aria-label="Exploration progress shown as a training loss curve">
+    <div class="loss-head"><span>Training loss</span><b id="lossVal">1.000</b></div>
+    <canvas id="spark" width="208" height="60"></canvas>
+    <p class="loss-note" id="lossNote">0 of 7 places visited</p>
+    <div class="legend"></div>
+    <div class="legend-cap"><span>High loss</span><span>Low loss</span></div>
+  </div>
+  <button class="prompt" id="prompt" type="button" hidden></button>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<div class="intro" id="intro">
+  <div class="intro-card">
+    <h1>Ziad Sayed<br>Ahmed</h1>
+    <p class="lead">Data Science and AI student in Cairo. I build machine learning models, BI dashboards, and full-stack apps.</p>
+    <div class="btns">
+      <button class="btn sticker primary" id="startBtn" type="button">Start exploring</button>
+      <button class="btn sticker" id="plainBtn" type="button">Read the plain version</button>
+    </div>
+    <p class="fine">This map is a loss landscape. Visit all seven places and the loss drops to its minimum, where the post office sits.</p>
+  </div>
+</div>
+
+<div id="scrim"></div>
+<aside id="panel" class="doc" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-hidden="true" tabindex="-1">
+  <button id="panelClose" type="button" aria-label="Close">&times;</button>
+  <h2 id="panelTitle"></h2>
+  <p class="sub" id="panelSub"></p>
+  <div id="panelBody"></div>
+</aside>
+
+<div id="classic" class="doc" role="document" aria-label="Plain version of the portfolio" aria-hidden="true">
+  <div class="classic-bar"><b>Ziad Sayed Ahmed</b><button type="button" id="classicBack">Back to the map</button></div>
+  <div id="classicBody"></div>
+</div>
+
+<noscript><p style="position:fixed;inset:auto 0 0 0;background:#0E2233;color:#fff;padding:16px;margin:0;z-index:99">Ziad Sayed Ahmed, Data Science &amp; AI student in Cairo. This portfolio needs JavaScript. Contact: ziadhamzawi@outlook.com, linkedin.com/in/ziad-sayed-ahmed, github.com/zhamzawyyy</p></noscript>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= helpers ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const C={paper:'#E4ECEA',ink:'#0E2233',gold:'#FFB627',rose:'#F0506E',teal:'#12A08A',wall:'#FBFCFA',glass:'#CFE4EA'};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TOUCH=matchMedia('(hover: none)').matches;
+const hex2rgb=h=>{const n=parseInt(h.slice(1),16);return [n>>16&255,n>>8&255,n&255];};
+const mix=(a,b,t)=>{const A=hex2rgb(a),B=hex2rgb(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';};
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+
+/* ================= content ================= */
+const LINKS={
+  email:'ziadhamzawi@outlook.com', phone:'+20 150 745 5083', phoneHref:'tel:+201507455083',
+  linkedin:'https://www.linkedin.com/in/ziad-sayed-ahmed', github:'https://github.com/zhamzawyyy', kaggle:'https://www.kaggle.com/ziadsayedahmed'
+};
+
+const SKILL_GROUPS=[
+  {name:'Languages',items:['Python','SQL','Java','PHP','JavaScript']},
+  {name:'Data and ML',items:['Pandas','NumPy','Scikit-learn','XGBoost']},
+  {name:'BI and tools',items:['Power BI (DAX)','Excel','Jupyter','Git']},
+  {name:'Web and systems',items:['HTML & CSS','MySQL','Linux & Shell']}
+];
+const SKILL_FLAT=SKILL_GROUPS.flatMap(g=>g.items);
+const ORB_POS=[[180,780],[470,700],[420,1130],[760,1000],[800,560],[640,470],[900,780],[1200,1000],[1240,760],[1180,420],[1000,240],[1350,600],[1360,1080],[1720,760],[1780,560],[1500,250]];
+const ORBS=SKILL_FLAT.map((name,i)=>({name,x:ORB_POS[i][0],y:ORB_POS[i][1],got:false}));
+
+const PROJECTS=[
+ {short:'Loan dashboard',name:'Loan Approval Prediction Dashboard',stack:['Power BI','DAX'],
+  summary:'A Power BI dashboard that analyzes 614 loan applications across credit history, income, property area, education, employment, and gender.',
+  kpis:[['614','Loans analyzed'],['68.73%','Approval rate'],['7.02K','Average client income'],['132.56K','Average loan amount']],
+  shot:true,
+  findings:['Credit history matters most: 79% of applicants with one were approved (415 of 525), against 8% of those without (7 of 89).',
+            'Graduates were approved 71% of the time (340 of 480) and non-graduates 61% (82 of 134).',
+            'Semiurban areas had the highest approval rate at 77%, then urban at 66% and rural at 61%.']},
+ {short:'Retail dashboard',name:'Retail Sales Intelligence Dashboard',year:'2025',stack:['Power BI','SQL','Python','DAX'],
+  summary:'A 6-page Power BI dashboard for retail sales.',
+  points:['Tracks 12+ KPIs across 50,000+ rows of retail sales data.','Cut manual reporting time by 70% with a Python and SQL ETL pipeline.']},
+ {short:'Churn model',name:'Customer Churn Prediction Model',year:'2025',stack:['Python','Scikit-learn','XGBoost','SMOTE'],
+  summary:'A classifier that predicts which telecom customers are about to leave.',
+  points:['Reached 89% accuracy and 0.93 AUC-ROC on 7,000 telecom records.','Raised minority-class recall by 22 percentage points by applying SMOTE to fix class imbalance.']},
+ {short:'Intrusion detection',name:'Network Intrusion Detection System',year:'2025',stack:['Python','Scikit-learn','PCA','NSL-KDD'],
+  summary:'A classification model that spots network attacks.',
+  points:['91% accuracy across 4 network attack types.','Cut the feature space by 40% and training time by 35% with PCA.']},
+ {short:'IoT monitor',name:'IoT Environment Monitoring System',year:'2025',stack:['Python','IoT','Cloud','REST API'],
+  summary:'A sensor prototype that watches the environment and warns you when it drifts.',
+  points:['Streams temperature, humidity, and CO2 readings every 30 seconds.','Sends automated email alerts when readings cross a threshold, through a REST API integration.']},
+ {short:'Inventory app',name:'Inventory Management System',year:'2026',stack:['HTML','CSS','JavaScript','PHP','XAMPP','MySQL'],
+  summary:'A full-stack web app for managing product inventory.',
+  points:['Complete CRUD on a relational MySQL database hosted on XAMPP.','PHP backend with form validation, plus a responsive UI with real-time stock alerts and dynamic filtering in JavaScript.']},
+ {short:'Hospital system',name:'Hospital Management System',stack:['Java','Swing','SQLite'],
+  summary:'A desktop app built for a university object-oriented programming course.',
+  points:['Full CRUD for patients, doctors, users, appointments, and prescriptions.','Separate Admin, Doctor, and Patient logins, with a UML class diagram of the design.']},
+ {short:'CPU scheduler',name:'CPU Scheduling Simulator',stack:['Python','customtkinter'],
+  summary:'A GUI simulator built for a university operating systems course.',
+  points:['Runs Round Robin, Shortest Job First, and Priority scheduling.','Reports waiting and turnaround times and draws the Gantt chart.']}
+];
+
+function tagsHTML(a){return '<div class="tags">'+a.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>';}
+function pointsHTML(a){return '<ul class="points">'+a.map(t=>'<li>'+t+'</li>').join('')+'</ul>';}
+function projectHTML(p,withTitle){
+  let h='<article class="project">';
+  if(withTitle) h+='<h3>'+p.name+(p.year?' ('+p.year+')':'')+'</h3>';
+  h+=tagsHTML(p.stack)+'<p>'+p.summary+'</p>';
+  if(p.kpis) h+='<div class="kpis">'+p.kpis.map(k=>'<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span></div>').join('')+'</div>';
+  if(p.shot) h+='<figure class="shot"><a href="dashboard.png" target="_blank" rel="noopener"><img src="dashboard.png" alt="Finance loan approval prediction dashboard: KPI cards for loan count, approval rate, average income and average loan amount, with charts of loan status by credit history, loan amount, education, income, employment, property area and gender" loading="lazy"></a><figcaption>The full dashboard. Select the image to open it at full size.</figcaption></figure>';
+  if(p.points) h+=pointsHTML(p.points);
+  if(p.findings) h+='<h4>What the data says</h4>'+pointsHTML(p.findings);
+  return h+'</article>';
+}
+function skillsHTML(all){
+  return SKILL_GROUPS.map(g=>'<div class="inv-group"><h4>'+g.name+'</h4><div class="skills">'+g.items.map(n=>{
+    const o=ORBS.find(o=>o.name===n); const on=all||(o&&o.got);
+    return '<span class="skill'+(on?' on':'')+'"><i></i>'+n+'</span>';}).join('')+'</div></div>').join('')+
+    '<p>Also comfortable with data cleaning, database systems, REST APIs, and XAMPP.</p>'+
+    '<p>Soft skills: communication, teamwork, problem-solving, time management, adaptability, and attention to detail.</p>';
+}
+
+const STATIONS=[
+ {id:'home',name:'Home',sign:'HOME',x:300,y:1040,w:190,h:104,rd:44,roof:'#12A08A',cols:2,rows:1,extra:34,
+  title:"Hi, I'm Ziad",sub:'Data Science & AI student in Cairo, Egypt',
+  render:()=>'<p class="lead">I build machine learning models, BI dashboards, and full-stack apps.</p>'+
+   '<p>My interest in data science started from curiosity about using data to solve real problems. What I care about most is the impact behind a model or dashboard: understanding the problem, finding the story in the data, and turning it into something useful.</p>'+
+   '<blockquote>To me, data isn\'t just numbers—it\'s an opportunity to understand, improve, and create.</blockquote>'+
+   '<dl class="facts"><dt>Studying</dt><dd>BSc in Data Science and AI, ElSewedy University of Technology (2024 – 2028)</dd>'+
+   '<dt>Right now</dt><dd>DEPI Data Scientist and AI program</dd>'+
+   '<dt>Languages</dt><dd>English and Arabic</dd>'+
+   '<dt>Open to</dt><dd>Freelance work in data analysis, Power BI dashboards, and Python automation</dd></dl>'},
+ {id:'uni',name:'University',sign:'UNIVERSITY',x:640,y:800,w:220,h:112,rd:40,roof:'#2E5E8C',cols:0,rows:0,extra:64,
+  title:'ElSewedy University of Technology',sub:'BSc in Data Science and AI, plus the DEPI program',
+  render:()=>'<div class="entry"><h3>BSc in Data Science and Artificial Intelligence</h3><p class="when">ElSewedy University of Technology, Cairo. 2024 – 2028</p>'+
+   '<p>Coursework: Machine Learning, Database Systems, Algorithms, Cloud Computing, IoT, Object-Oriented Programming (Java), and Web Programming.</p></div>'+
+   '<div class="entry"><h3>Data Scientist and AI Program (6 months)</h3><p class="when">Digital Egypt Pioneers Initiative (DEPI). 2026 – Present</p></div>'},
+ {id:'nti',name:'NTI',sign:'NTI',x:980,y:1050,w:200,h:104,rd:44,roof:'#2A9DC8',cols:3,rows:1,extra:40,
+  title:'National Telecommunication Institute',sub:'Two training programs in 2025',
+  render:()=>'<div class="entry"><h3>Data Analytics Trainee</h3><p class="when">NTI, 2025. 120+ hours of hands-on training</p>'+
+   pointsHTML(['Delivered 5 data analytics projects with Python, SQL, Excel, and Power BI on enterprise-scale datasets.',
+   'Built data cleaning and preprocessing pipelines that resolved over 20% of data quality issues.',
+   'Presented findings and recommendations to a 30-person professional cohort.'])+'</div>'+
+   '<div class="entry"><h3>Cybersecurity Trainee</h3><p class="when">NTI, Aug – Sep 2025</p>'+
+   pointsHTML(['Studied network security fundamentals, NIST risk management, and ethical hacking labs.'])+'</div>'},
+ {id:'cib',name:'CIB Tower',sign:'CIB',x:1060,y:620,w:170,h:190,rd:40,roof:'#173248',cols:4,rows:5,extra:44,
+  title:'Commercial International Bank',sub:'Summer Intern, Jun – Aug 2026, Cairo',
+  render:()=>'<div class="entry">'+pointsHTML([
+   'Completed the CIB Summer Internship Program, which combined applied data analysis and reporting tasks with structured training on Generative AI, banking fundamentals, fintech, ESG, and responsible AI in banking.',
+   'Built a 10-slide presentation that pulls the learning journey together across banking ecosystems, digital banking, AI concepts, and AI use cases in banking such as intelligent decisioning. Delivered as PPTX and PDF.',
+   'Earned a Certificate of Attendance for the Generative AI training track.'])+'</div>'},
+ {id:'lab',name:'Project Lab',sign:'PROJECT LAB',x:1420,y:860,w:270,h:120,rd:52,roof:'#FFB627',cols:0,rows:0,extra:10,
+  title:'Project Lab',sub:'Eight projects: dashboards, ML models, and apps',
+  render:(mode)=>{
+    if(mode==='classic') return PROJECTS.map(p=>projectHTML(p,true)).join('')+'<p><a class="linkbtn ghost" href="'+LINKS.github+'" target="_blank" rel="noopener">More on GitHub</a></p>';
+    return '<div class="tabs" role="tablist" aria-label="Projects">'+PROJECTS.map((p,i)=>'<button class="tab" role="tab" type="button" data-tab="'+i+'" aria-selected="'+(i===0)+'">'+p.short+'</button>').join('')+'</div>'+
+      '<div id="projDetail" role="tabpanel">'+projectHTML(PROJECTS[0],true)+'</div>'+
+      '<p style="margin-top:22px"><a class="linkbtn ghost" href="'+LINKS.github+'" target="_blank" rel="noopener">More on GitHub</a></p>';
+  }},
+ {id:'trophy',name:'Trophy Hall',sign:'TROPHIES',x:1560,y:520,w:200,h:108,rd:40,roof:'#6B4FA0',cols:3,rows:1,extra:56,
+  title:'Trophy Hall',sub:'Certifications and activities',
+  render:()=>'<div class="entry"><h3>Certifications</h3>'+pointsHTML([
+   'Getting Started with Deep Learning, NVIDIA Deep Learning Institute (2025)',
+   'Data Analytics Training, 120+ hours, National Telecommunication Institute (2025)',
+   'Cybersecurity Fundamentals, National Telecommunication Institute (2025)'])+'</div>'+
+   '<div class="entry"><h3>Activities</h3>'+pointsHTML([
+   '<b>Hackathon competitor.</b> Built working prototypes under 24-hour deadlines in cross-functional teams.',
+   '<b>Peer coordinator.</b> Led weekly Python and machine learning sessions for a 10-person student group.',
+   '<b>Continuous learner.</b> 6+ hours a week on Coursera, Kaggle, and DataCamp.'])+'</div>'},
+ {id:'post',name:'Post Office',sign:'POST OFFICE',x:1700,y:250,w:170,h:100,rd:38,roof:'#F0506E',cols:2,rows:1,extra:36,
+  title:'Post Office',sub:'Say hello',
+  render:()=>'<p class="lead">I\'m open to freelance work in data analysis, Power BI dashboards, and Python automation. Email is the fastest way to reach me.</p>'+
+   '<p><a class="linkbtn" href="mailto:'+LINKS.email+'">Email '+LINKS.email+'</a></p>'+
+   '<p><a class="linkbtn ghost" href="'+LINKS.linkedin+'" target="_blank" rel="noopener">LinkedIn</a><a class="linkbtn ghost" href="'+LINKS.github+'" target="_blank" rel="noopener">GitHub</a><a class="linkbtn ghost" href="'+LINKS.kaggle+'" target="_blank" rel="noopener">Kaggle</a></p>'+
+   '<dl class="facts"><dt>Phone</dt><dd><a href="'+LINKS.phoneHref+'">'+LINKS.phone+'</a></dd><dt>Based in</dt><dd>Cairo, Egypt</dd><dt>Languages</dt><dd>English and Arabic</dd></dl>'}
+];
+const ORDER=['home','uni','nti','cib','lab','trophy','post'];
+const byId=id=>STATIONS.find(s=>s.id===id);
+STATIONS.forEach(s=>{s.top=s.y-s.h; s.left=s.x-s.w/2; s.door={x:s.x,y:s.y+34};});
+
+/* ================= state ================= */
+const canvas=$('#world'), ctx=canvas.getContext('2d');
+const WORLD={w:1900,h:1250}, MIN={x:1700,y:250};
+const state={started:false,panelOpen:false,classic:false,visited:new Set(),near:null,target:null,autoOpen:null,history:[1],pendingToast:'',t:0,collected:0};
+const player={x:300,y:1112,face:1,moving:false};
+const cam={x:0,y:0};
+const keys={};
+let W=0,H=0,dpr=1,scale=1,last=0,stuck=0,toastTimer=0,lastFocus=null;
+const trail=[];
+
+/* ================= world generation ================= */
+const RING_N=22, RING_STEP=80;
+const ringPoint=(k,th)=>{const R=60+RING_STEP*k; const f=1+0.10*Math.sin(2*th+0.6)+0.06*Math.sin(3*th+1.3)+0.03*Math.sin(5*th+0.2); return [MIN.x+Math.cos(th)*R*f*1.28, MIN.y+Math.sin(th)*R*f];};
+const rings=[], ringFill=[];
+const ROSE_TINT='#EBDADC', TEAL_TINT='#BFE3D8';
+for(let k=0;k<RING_N;k++){
+  const p=new Path2D();
+  for(let i=0;i<=120;i++){const [x,y]=ringPoint(k,i/120*Math.PI*2); i?p.lineTo(x,y):p.moveTo(x,y);}
+  p.closePath(); rings.push(p);
+  const t=k/(RING_N-1);
+  ringFill.push(t>.5?mix(C.paper,ROSE_TINT,(t-.5)*2):mix(TEAL_TINT,C.paper,t*2));
+}
+const ringLabels=[4,9,14].map(k=>({k,txt:'loss '+((k+1)/RING_N).toFixed(2),p:ringPoint(k,2.35)}));
+
+const rnd=mulberry(7);
+const clusters=[];
+(function(){
+  let tries=0;
+  while(clusters.length<46&&tries<600){
+    tries++;
+    const cx=60+rnd()*(WORLD.w-120), cy=60+rnd()*(WORLD.h-120);
+    if(STATIONS.some(s=>cx>s.left-70&&cx<s.left+s.w+70&&cy>s.top-s.rd-90&&cy<s.y+80)) continue;
+    if(ORBS.some(o=>Math.hypot(o.x-cx,o.y-cy)<70)) continue;
+    const cls=rnd()<.5;
+    const pts=[]; for(let i=0;i<8;i++) pts.push([cx+(rnd()+rnd()-1)*34, cy+(rnd()+rnd()-1)*24, rnd()<.82?cls:!cls]);
+    clusters.push(pts);
+  }
+})();
+
+const pathPts=ORDER.map(id=>{const s=byId(id);return [s.door.x,s.door.y];});
+
+/* ================= sizing ================= */
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  W=innerWidth; H=innerHeight;
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  scale=Math.max(.75,Math.min(W/1200,H/760));
+  drawSpark();
+}
+addEventListener('resize',resize);
+
+/* ================= drawing ================= */
+function rrect(x,y,w,h,r){ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h);}
+function star(cx,cy,r){ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;ctx.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}ctx.closePath();}
+
+function drawStation(s,t){
+  const L=s.left, top=s.top, vis=state.visited.has(s.id);
+  ctx.lineJoin='round'; ctx.lineWidth=2.5; ctx.strokeStyle=C.ink;
+  ctx.fillStyle='rgba(14,34,51,.15)';
+  ctx.beginPath(); ctx.moveTo(L,s.y); ctx.lineTo(L+s.w,s.y); ctx.lineTo(L+s.w+28,s.y+22); ctx.lineTo(L+28,s.y+22); ctx.closePath(); ctx.fill();
+
+  // things that sit behind the roof
+  if(s.id==='home'){ctx.fillStyle=C.rose;ctx.fillRect(L+s.w-56,top-s.rd-26,20,34);ctx.strokeRect(L+s.w-56,top-s.rd-26,20,34);}
+  if(s.id==='uni'){
+    ctx.fillStyle=mix(s.roof,'#FFFFFF',.18);ctx.beginPath();ctx.moveTo(L-8,top-s.rd);ctx.lineTo(s.x,top-s.rd-42);ctx.lineTo(L+s.w+8,top-s.rd);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(s.x,top-s.rd-42);ctx.lineTo(s.x,top-s.rd-66);ctx.stroke();
+    const wv=RM?0:Math.sin(t*4)*3; ctx.fillStyle=C.gold;ctx.beginPath();ctx.moveTo(s.x,top-s.rd-66);ctx.lineTo(s.x+22,top-s.rd-61+wv);ctx.lineTo(s.x,top-s.rd-54);ctx.closePath();ctx.fill();ctx.stroke();
+  }
+  if(s.id==='trophy'){
+    ctx.fillStyle=C.gold;ctx.beginPath();ctx.arc(s.x,top-s.rd,46,Math.PI,0);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.rose;star(s.x,top-s.rd-58,10);ctx.fill();ctx.stroke();
+  }
+  if(s.id==='cib'){
+    ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(s.x,top-s.rd);ctx.lineTo(s.x,top-s.rd-42);ctx.stroke();ctx.lineWidth=2.5;
+    if(RM||Math.sin(t*4)>0){ctx.fillStyle=C.rose;ctx.beginPath();ctx.arc(s.x,top-s.rd-44,5,0,7);ctx.fill();ctx.stroke();}
+  }
+  // roof
+  ctx.fillStyle=s.roof;ctx.fillRect(L-8,top-s.rd,s.w+16,s.rd);ctx.strokeRect(L-8,top-s.rd,s.w+16,s.rd);
+  ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.5;
+  for(let yy=top-s.rd+12;yy<top-4;yy+=12){ctx.beginPath();ctx.moveTo(L-4,yy);ctx.lineTo(L+s.w+4,yy);ctx.stroke();}
+  ctx.strokeStyle=C.ink;ctx.lineWidth=2.5;
+  ctx.fillStyle=mix(s.roof,'#000000',.3);ctx.fillRect(L-8,top-2,s.w+16,10);ctx.strokeRect(L-8,top-2,s.w+16,10);
+  // wall
+  ctx.fillStyle=C.wall;ctx.fillRect(L,top+8,s.w,s.h-8);ctx.strokeRect(L,top+8,s.w,s.h-8);
+
+  // windows
+  if(s.cols){
+    ctx.fillStyle=vis?C.gold:C.glass; ctx.lineWidth=2;
+    for(let j=0;j<s.rows;j++){
+      const wy=top+42+j*26; if(wy+18>s.y-6) break;
+      for(let i=0;i<s.cols;i++){
+        const wx=L+(i+1)*s.w/(s.cols+1)-11;
+        if(Math.abs(wx+11-s.x)<30&&wy+18>s.y-56) continue;
+        ctx.fillRect(wx,wy,22,18);ctx.strokeRect(wx,wy,22,18);
+      }
+    }
+    ctx.lineWidth=2.5;
+  }
+  if(s.id==='uni'){
+    ctx.fillStyle='#E3E9E7';
+    [0.12,0.28,0.4,0.6,0.72,0.88].forEach(f=>{const px=L+s.w*f-6; ctx.fillRect(px,top+34,12,s.h-34);ctx.strokeRect(px,top+34,12,s.h-34);});
+  }
+  if(s.id==='lab'){
+    const sy=top+36, sw=86, sh=54, lx=L+14, rx=L+s.w-14-sw;
+    ctx.fillStyle=C.ink;ctx.fillRect(lx,sy,sw,sh);ctx.fillRect(rx,sy,sw,sh);
+    const cols=[C.gold,C.teal,C.rose,C.gold,C.teal];
+    for(let i=0;i<5;i++){const h=8+(RM?.5:Math.sin(t*2+i*1.3)*.5+.5)*30;ctx.fillStyle=cols[i];ctx.fillRect(lx+8+i*15,sy+sh-6-h,10,h);}
+    ctx.strokeStyle=C.teal;ctx.lineWidth=2.5;ctx.beginPath();
+    for(let i=0;i<=20;i++){const x=rx+7+i*(sw-14)/20,y=sy+8+38*(1-Math.exp(-i/6))+(RM?0:Math.sin(i*1.7+t*3)*1.6*(1-i/20));i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();ctx.strokeStyle=C.ink;
+  }
+  // sign
+  ctx.font='700 11px Silkscreen, monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  const tw=ctx.measureText(s.sign).width;
+  ctx.fillStyle=C.ink;rrect(s.x-tw/2-9,top+13,tw+18,20,5);ctx.fill();
+  ctx.fillStyle=C.paper;ctx.fillText(s.sign,s.x,top+24);
+  // door + mat
+  ctx.fillStyle=C.ink;ctx.fillRect(s.x-17,s.y-50,34,50);
+  ctx.fillStyle=C.gold;ctx.beginPath();ctx.arc(s.x+9,s.y-24,2.6,0,7);ctx.fill();
+  if(state.near===s){
+    const p=RM?1:.5+.5*Math.sin(t*6);
+    ctx.strokeStyle=C.gold;ctx.lineWidth=3;ctx.setLineDash([6,6]);ctx.beginPath();ctx.ellipse(s.x,s.y+22,38+p*4,12+p*2,0,0,7);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=C.ink;ctx.lineWidth=2.5;
+  }
+
+  // extras in front
+  if(s.id==='nti'){
+    const cx=L+s.w-46, cy=top-s.rd+22;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(-.6);
+    ctx.fillStyle=C.wall;ctx.beginPath();ctx.arc(0,0,17,0,Math.PI);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-15);ctx.stroke();ctx.fillStyle=C.rose;ctx.beginPath();ctx.arc(0,-16,3.5,0,7);ctx.fill();
+    ctx.restore();
+    if(!RM){for(let i=0;i<2;i++){const ph=(t*.8+i*.5)%1;ctx.strokeStyle='rgba(42,157,200,'+(1-ph).toFixed(2)+')';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx+8,cy-22,8+ph*22,-Math.PI*.95,-Math.PI*.05);ctx.stroke();}ctx.strokeStyle=C.ink;}
+  }
+  if(s.id==='post'){
+    const px=L+s.w-12;
+    ctx.beginPath();ctx.moveTo(px,top-s.rd);ctx.lineTo(px,top-s.rd-38);ctx.stroke();
+    const wv=RM?0:Math.sin(t*4)*3;ctx.fillStyle=C.rose;ctx.beginPath();ctx.moveTo(px,top-s.rd-38);ctx.lineTo(px+22,top-s.rd-32+wv);ctx.lineTo(px,top-s.rd-24);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.ink;ctx.fillRect(L+s.w+29,s.y-14,4,14);
+    ctx.fillStyle=C.rose;rrect(L+s.w+19,s.y-34,24,20,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.ink;ctx.fillRect(L+s.w+24,s.y-27,14,3);
+  }
+  if(s.id==='home'&&!RM){
+    for(let i=0;i<3;i++){const ph=(t*.5+i/3)%1;ctx.fillStyle='rgba(255,255,255,'+(.85*(1-ph)).toFixed(2)+')';ctx.beginPath();ctx.arc(L+s.w-46+Math.sin(ph*6)*5,top-s.rd-30-ph*42,4+ph*6,0,7);ctx.fill();}
+  }
+
+  // status marker
+  const my=top-s.rd-s.extra-20-(RM?0:Math.abs(Math.sin(t*3))*5);
+  ctx.lineWidth=2.5;ctx.strokeStyle=C.ink;
+  ctx.fillStyle=vis?C.teal:C.gold;ctx.beginPath();ctx.arc(s.x,my,12,0,7);ctx.fill();ctx.stroke();
+  if(vis){ctx.beginPath();ctx.moveTo(s.x-5,my);ctx.lineTo(s.x-1,my+4);ctx.lineTo(s.x+6,my-5);ctx.lineWidth=3;ctx.stroke();ctx.lineWidth=2.5;}
+  else{ctx.fillStyle=C.ink;ctx.font='700 14px Silkscreen, monospace';ctx.fillText('!',s.x+1,my+1);}
+}
+
+function drawPlayer(t){
+  const {x,y}=player, mv=player.moving&&!RM;
+  const bob=mv?Math.abs(Math.sin(t*12))*3:0, st=mv?Math.sin(t*12)*3:0;
+  ctx.fillStyle='rgba(14,34,51,.22)';ctx.beginPath();ctx.ellipse(x,y+2,14,5,0,0,7);ctx.fill();
+  ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle=C.ink;ctx.fillStyle=C.ink;
+  ctx.fillRect(x-9,y-10,6,10+st*.5);ctx.fillRect(x+3,y-10,6,10-st*.5);
+  ctx.fillStyle=C.gold;rrect(x-14,y-40-bob,28,30,9);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y-40-bob);ctx.lineTo(x+3*player.face,y-49-bob);ctx.stroke();
+  ctx.fillStyle=C.rose;ctx.beginPath();ctx.arc(x+3*player.face,y-50-bob,3.6,0,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.ink;const ex=player.face*3;
+  ctx.beginPath();ctx.arc(x-5+ex,y-29-bob,2.7,0,7);ctx.arc(x+5+ex,y-29-bob,2.7,0,7);ctx.fill();
+  ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+ex,y-22-bob,4,.2,Math.PI-.2);ctx.stroke();
+}
+
+function drawOrb(o,t){
+  const bob=RM?0:Math.sin(t*3+o.x)*3, p=RM?1:.5+.5*Math.sin(t*3+o.y);
+  ctx.fillStyle='rgba(255,182,39,'+(.16+.14*p).toFixed(2)+')';ctx.beginPath();ctx.arc(o.x,o.y+bob,17+p*3,0,7);ctx.fill();
+  ctx.lineWidth=2.5;ctx.strokeStyle=C.ink;ctx.fillStyle=C.gold;ctx.beginPath();ctx.arc(o.x,o.y+bob,9,0,7);ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.75)';ctx.beginPath();ctx.arc(o.x-3,o.y+bob-3,2.4,0,7);ctx.fill();
+  if(Math.hypot(o.x-player.x,o.y-(player.y-16))<120){
+    ctx.font='700 10px Silkscreen, monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    const w=ctx.measureText(o.name).width;
+    ctx.fillStyle=C.ink;rrect(o.x-w/2-7,o.y+bob-38,w+14,18,5);ctx.fill();
+    ctx.fillStyle=C.paper;ctx.fillText(o.name,o.x,o.y+bob-29);
+  }
+}
+
+function draw(t){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle=C.ink;ctx.fillRect(0,0,canvas.width,canvas.height);
+  const s=scale*dpr;
+  ctx.setTransform(s,0,0,s,-cam.x*s,-cam.y*s);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,WORLD.w,WORLD.h);ctx.clip();
+
+  ctx.fillStyle=ringFill[RING_N-1];ctx.fillRect(0,0,WORLD.w,WORLD.h);
+  for(let k=RING_N-1;k>=0;k--){ctx.fillStyle=ringFill[k];ctx.fill(rings[k]);}
+  for(let k=0;k<RING_N;k++){const idx=k%5===4;ctx.strokeStyle=idx?'rgba(14,34,51,.34)':'rgba(14,34,51,.15)';ctx.lineWidth=idx?2:1.2;ctx.stroke(rings[k]);}
+  // survey grid
+  const vw=W/scale,vh=H/scale;
+  ctx.strokeStyle='rgba(14,34,51,.055)';ctx.lineWidth=1;ctx.beginPath();
+  for(let x=Math.floor(cam.x/100)*100;x<cam.x+vw+100;x+=100){ctx.moveTo(x,cam.y-10);ctx.lineTo(x,cam.y+vh+10);}
+  for(let y=Math.floor(cam.y/100)*100;y<cam.y+vh+100;y+=100){ctx.moveTo(cam.x-10,y);ctx.lineTo(cam.x+vw+10,y);}
+  ctx.stroke();
+  // contour labels
+  ctx.font='700 10px Silkscreen, monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ringLabels.forEach(l=>{const w=ctx.measureText(l.txt).width;ctx.fillStyle=ringFill[l.k];rrect(l.p[0]-w/2-6,l.p[1]-9,w+12,18,5);ctx.fill();ctx.fillStyle='rgba(14,34,51,.6)';ctx.fillText(l.txt,l.p[0],l.p[1]+1);});
+  // minimum marker
+  ctx.fillStyle='rgba(18,160,138,.25)';ctx.beginPath();ctx.arc(MIN.x,MIN.y,46,0,7);ctx.fill();
+
+  // gradient path between places
+  ctx.strokeStyle='rgba(18,160,138,.75)';ctx.lineWidth=5;ctx.lineCap='round';ctx.setLineDash([1,13]);
+  ctx.beginPath();ctx.moveTo(pathPts[0][0],pathPts[0][1]);
+  for(let i=1;i<pathPts.length-1;i++){const a=pathPts[i],b=pathPts[i+1];ctx.quadraticCurveTo(a[0],a[1],(a[0]+b[0])/2,(a[1]+b[1])/2);}
+  const e=pathPts[pathPts.length-1];ctx.lineTo(e[0],e[1]);ctx.stroke();ctx.setLineDash([]);ctx.lineCap='butt';
+
+  // scatter clusters
+  clusters.forEach(c=>c.forEach(d=>{ctx.fillStyle=d[2]?'rgba(18,160,138,.55)':'rgba(240,80,110,.55)';ctx.beginPath();ctx.arc(d[0],d[1],2.8,0,7);ctx.fill();}));
+
+  // optimizer trail
+  ctx.lineWidth=3;ctx.lineCap='round';
+  for(let i=1;i<trail.length;i++){ctx.strokeStyle='rgba(240,80,110,'+(i/trail.length*.7).toFixed(2)+')';ctx.beginPath();ctx.moveTo(trail[i-1][0],trail[i-1][1]);ctx.lineTo(trail[i][0],trail[i][1]);ctx.stroke();}
+  ctx.lineCap='butt';
+
+  ORBS.forEach(o=>{if(!o.got)drawOrb(o,t);});
+
+  const ents=STATIONS.map(st=>({y:st.y,f:()=>drawStation(st,t)}));
+  ents.push({y:player.y,f:()=>drawPlayer(t)});
+  ents.sort((a,b)=>a.y-b.y).forEach(e=>e.f());
+
+  // guide chevron toward the next unvisited place
+  if(state.started&&!state.panelOpen){
+    const nx=byId(ORDER.find(id=>!state.visited.has(id))||'post');
+    const dx=nx.door.x-player.x, dy=nx.door.y-(player.y-16), d=Math.hypot(dx,dy);
+    if(d>260){
+      const a=Math.atan2(dy,dx), r=56+(RM?0:Math.sin(t*4)*4), cx=player.x+Math.cos(a)*r, cy=player.y-16+Math.sin(a)*r;
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(a);ctx.fillStyle=C.gold;ctx.strokeStyle=C.ink;ctx.lineWidth=2.5;ctx.lineJoin='round';
+      ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-7,-9);ctx.lineTo(-3,0);ctx.lineTo(-7,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    }
+  }
+  ctx.restore();
+  ctx.setTransform(s,0,0,s,-cam.x*s,-cam.y*s);
+  ctx.strokeStyle=C.ink;ctx.lineWidth=8;ctx.strokeRect(0,0,WORLD.w,WORLD.h);
+}
+
+/* ================= HUD ================= */
+const sparkCv=$('#spark'), sg=sparkCv.getContext('2d');
+function lossAt(n){return n===0?1:Math.pow(.6,n);}
+function drawSpark(){
+  const r=Math.min(window.devicePixelRatio||1,2), w=sparkCv.clientWidth||208, h=sparkCv.clientHeight||60;
+  sparkCv.width=w*r;sparkCv.height=h*r;sg.setTransform(r,0,0,r,0,0);sg.clearRect(0,0,w,h);
+  const px=i=>8+i/7*(w-16), py=l=>6+(1-l)*(h-14);
+  sg.strokeStyle='rgba(14,34,51,.35)';sg.lineWidth=1.5;sg.setLineDash([3,4]);sg.beginPath();sg.moveTo(8,h-4);sg.lineTo(w-8,h-4);sg.stroke();
+  sg.strokeStyle='rgba(14,34,51,.3)';sg.beginPath();for(let i=0;i<=7;i++){const x=px(i),y=py(lossAt(i));i?sg.lineTo(x,y):sg.moveTo(x,y);}sg.stroke();sg.setLineDash([]);
+  sg.strokeStyle=C.teal;sg.lineWidth=3;sg.lineJoin='round';sg.lineCap='round';sg.beginPath();
+  state.history.forEach((l,i)=>{const x=px(i),y=py(l);i?sg.lineTo(x,y):sg.moveTo(x,y);});sg.stroke();
+  const i=state.history.length-1;sg.fillStyle=C.gold;sg.strokeStyle=C.ink;sg.lineWidth=2.5;sg.beginPath();sg.arc(px(i),py(state.history[i]),5.5,0,7);sg.fill();sg.stroke();
+}
+function updateHud(){
+  const n=state.visited.size, l=lossAt(n);
+  $('#lossVal').textContent=l.toFixed(3);
+  $('#lossNote').textContent=n===7?'Converged. All 7 places visited.':n+' of 7 places visited';
+  $('#skillCount').textContent=state.collected+'/'+ORBS.length;
+  drawSpark();
+}
+function toast(msg,ms){
+  const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),ms||2600);
+}
+function setPrompt(s){
+  const el=$('#prompt');
+  if(!s){el.hidden=true;return;}
+  el.innerHTML=(TOUCH?'':'<kbd>E</kbd>')+'<span>Enter '+s.name+'</span>';el.hidden=false;
+}
+
+/* ================= panel ================= */
+const panel=$('#panel'), scrim=$('#scrim');
+function openPanel(title,sub,html,after){
+  lastFocus=document.activeElement;
+  $('#panelTitle').textContent=title;$('#panelSub').textContent=sub;$('#panelBody').innerHTML=html;
+  panel.classList.add('open');scrim.classList.add('show');panel.setAttribute('aria-hidden','false');panel.scrollTop=0;
+  state.panelOpen=true;for(const k in keys)keys[k]=false;state.target=null;state.autoOpen=null;setPrompt(null);
+  if(after)after();
+  setTimeout(()=>panel.focus({preventScroll:true}),30);
+}
+function closePanel(){
+  if(!state.panelOpen)return;
+  panel.classList.remove('open');scrim.classList.remove('show');panel.setAttribute('aria-hidden','true');state.panelOpen=false;
+  if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true});
+  if(state.pendingToast){const m=state.pendingToast;state.pendingToast='';setTimeout(()=>toast(m,3600),250);}
+}
+function openStation(s){
+  const first=!state.visited.has(s.id);
+  state.visited.add(s.id);
+  openPanel(s.title,s.sub,s.render('panel'),()=>{
+    if(s.id==='lab'){
+      const body=$('#panelBody');
+      body.addEventListener('click',function h(e){
+        const b=e.target.closest('[data-tab]');if(!b)return;
+        body.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));
+        $('#projDetail').innerHTML=projectHTML(PROJECTS[+b.dataset.tab],true);
+      });
+    }
+  });
+  if(first){
+    const n=state.visited.size;state.history.push(lossAt(n));updateHud();
+    state.pendingToast=n===7?'Converged at '+lossAt(n).toFixed(3)+'. Thanks for walking the whole map.':'Training loss down to '+lossAt(n).toFixed(3)+'.';
+  }
+}
+function openSkills(){
+  openPanel('Skills','Pick up the gold orbs on the map to light them up',
+    skillsHTML(false)+'<p>You have picked up '+state.collected+' of '+ORBS.length+'.</p>');
+}
+panel.addEventListener('keydown',e=>{
+  if(e.key!=='Tab')return;
+  const f=[...panel.querySelectorAll('a[href],button:not([disabled])')].filter(x=>x.offsetParent!==null);
+  if(!f.length)return;const a=f[0],b=f[f.length-1];
+  if(e.shiftKey&&(document.activeElement===a||document.activeElement===panel)){e.preventDefault();b.focus();}
+  else if(!e.shiftKey&&document.activeElement===b){e.preventDefault();a.focus();}
+});
+$('#panelClose').addEventListener('click',closePanel);
+scrim.addEventListener('click',closePanel);
+
+/* ================= plain version ================= */
+function buildClassic(){
+  const ids=['home','cib','nti','uni','lab','trophy'];
+  $('#classicBody').innerHTML=ids.map(id=>{const s=byId(id);return '<section id="c-'+id+'"><h2>'+s.title+'</h2><p class="sub">'+s.sub+'</p>'+s.render('classic')+'</section>';}).join('')+
+   '<section><h2>Skills</h2><p class="sub">Tools I work with</p>'+skillsHTML(true)+'</section>'+
+   '<section><h2>'+byId('post').title+'</h2><p class="sub">'+byId('post').sub+'</p>'+byId('post').render('classic')+'</section>';
+}
+const classic=$('#classic');
+function openClassic(){
+  lastFocus=document.activeElement;closePanel();
+  classic.classList.add('open');classic.setAttribute('aria-hidden','false');state.classic=true;classic.scrollTop=0;
+  setTimeout(()=>$('#classicBack').focus({preventScroll:true}),30);
+}
+function closeClassic(){
+  classic.classList.remove('open');classic.setAttribute('aria-hidden','true');state.classic=false;
+  if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true});
+}
+$('#btnClassic').addEventListener('click',openClassic);
+$('#plainBtn').addEventListener('click',openClassic);
+$('#skipLink').addEventListener('click',e=>{e.preventDefault();openClassic();});
+$('#classicBack').addEventListener('click',closeClassic);
+$('#btnSkills').addEventListener('click',()=>{if(state.started)openSkills();else toast('Press Start exploring first.');});
+
+/* ================= input ================= */
+$('#startBtn').addEventListener('click',()=>{
+  state.started=true;document.body.classList.add('playing');$('#intro').classList.add('gone');$('#intro').setAttribute('inert','');
+  toast(TOUCH?'Tap or drag on the map to walk. Tap a building to go in.':'Walk with the arrow keys or WASD. Press E at a door.',4200);
+  canvas.focus({preventScroll:true});
+});
+const KEYMAP={ArrowLeft:'l',a:'l',A:'l',ArrowRight:'r',d:'r',D:'r',ArrowUp:'u',w:'u',W:'u',ArrowDown:'d',s:'d',S:'d'};
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(state.classic)closeClassic();else closePanel();return;}
+  if(!state.started||state.panelOpen||state.classic)return;
+  const k=KEYMAP[e.key];
+  if(k){keys[k]=true;e.preventDefault();return;}
+  const ae=document.activeElement, onCtl=ae&&ae!==document.body&&ae!==canvas&&/^(BUTTON|A|INPUT)$/.test(ae.tagName);
+  if(e.key==='e'||e.key==='E'||((e.key==='Enter'||e.key===' ')&&!onCtl)){
+    if(state.near){e.preventDefault();openStation(state.near);}
+  }
+});
+addEventListener('keyup',e=>{const k=KEYMAP[e.key];if(k)keys[k]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+$('#prompt').addEventListener('click',()=>{if(state.near)openStation(state.near);});
+
+let pressing=false;
+const toWorld=e=>({x:e.clientX/scale+cam.x,y:e.clientY/scale+cam.y});
+function hitStation(p){return STATIONS.find(s=>p.x>s.left-10&&p.x<s.left+s.w+10&&p.y>s.top-s.rd-10&&p.y<s.y+44);}
+canvas.addEventListener('pointerdown',e=>{
+  if(!state.started||state.panelOpen||state.classic)return;
+  pressing=true;canvas.setPointerCapture(e.pointerId);
+  const p=toWorld(e), s=hitStation(p);
+  if(s){state.target={x:s.door.x,y:s.door.y};state.autoOpen=s;}
+  else{state.target=p;state.autoOpen=null;}
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!state.started||state.panelOpen)return;
+  const p=toWorld(e);
+  if(pressing&&!state.autoOpen){state.target=p;}
+  canvas.style.cursor=hitStation(p)?'pointer':'default';
+});
+const endPress=()=>{pressing=false;};
+canvas.addEventListener('pointerup',endPress);canvas.addEventListener('pointercancel',endPress);
+
+/* ================= simulation ================= */
+const SPEED=235, R=12;
+function blocked(x,y){
+  return STATIONS.some(s=>x>s.left-8-R&&x<s.left+s.w+8+R&&y>s.top-s.rd-4-4&&y<s.y+R*.6);
+}
+function update(dt){
+  let ax=0,ay=0;
+  const live=state.started&&!state.panelOpen&&!state.classic;
+  if(live){
+    if(keys.l)ax-=1;if(keys.r)ax+=1;if(keys.u)ay-=1;if(keys.d)ay+=1;
+    if(ax||ay){state.target=null;state.autoOpen=null;}
+    else if(state.target){
+      const dx=state.target.x-player.x,dy=state.target.y-player.y,d=Math.hypot(dx,dy);
+      if(d<6)state.target=null;else{ax=dx/d;ay=dy/d;}
+    }
+  }
+  const len=Math.hypot(ax,ay);
+  if(len>1){ax/=len;ay/=len;}
+  const ox=player.x,oy=player.y;
+  if(len){
+    const nx=clamp(player.x+ax*SPEED*dt,30,WORLD.w-30);
+    if(!blocked(nx,player.y))player.x=nx;
+    const ny=clamp(player.y+ay*SPEED*dt,50,WORLD.h-16);
+    if(!blocked(player.x,ny))player.y=ny;
+    if(ax>.15)player.face=1;else if(ax<-.15)player.face=-1;
+  }
+  const moved=Math.hypot(player.x-ox,player.y-oy);
+  player.moving=moved>.05;
+  if(state.target&&len&&moved<SPEED*dt*.25){stuck+=dt;if(stuck>.35){state.target=null;state.autoOpen=null;stuck=0;}}else stuck=0;
+  if(moved>0){const l=trail[trail.length-1];if(!l||Math.hypot(l[0]-player.x,l[1]-player.y)>9){trail.push([player.x,player.y-2]);if(trail.length>360)trail.shift();}}
+
+  // nearest door
+  let near=null,best=80;
+  STATIONS.forEach(s=>{const d=Math.hypot(s.door.x-player.x,s.door.y-player.y);if(d<best){best=d;near=s;}});
+  if(live&&state.autoOpen&&Math.hypot(state.autoOpen.door.x-player.x,state.autoOpen.door.y-player.y)<44){const s=state.autoOpen;state.autoOpen=null;state.target=null;openStation(s);return;}
+  if(!live)near=null;
+  if(near!==state.near){state.near=near;setPrompt(near);}
+
+  // orbs
+  if(live)ORBS.forEach(o=>{
+    if(!o.got&&Math.hypot(o.x-player.x,o.y-(player.y-14))<28){
+      o.got=true;state.collected++;updateHud();
+      toast(state.collected===ORBS.length?'All '+ORBS.length+' skills collected.':'Picked up '+o.name+' ('+state.collected+'/'+ORBS.length+')',1800);
+    }
+  });
+}
+function updateCam(dt){
+  const vw=W/scale,vh=H/scale;
+  const px=state.started?.5:(W>720?.66:.5);
+  let tx=player.x-vw*px, ty=player.y-vh*.55;
+  tx=vw>=WORLD.w?(WORLD.w-vw)/2:clamp(tx,0,WORLD.w-vw);
+  ty=vh>=WORLD.h?(WORLD.h-vh)/2:clamp(ty,0,WORLD.h-vh);
+  const k=RM?1:1-Math.pow(.0008,dt);
+  cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;
+}
+function loop(ts){
+  const dt=Math.min(.05,(ts-last)/1000||0);last=ts;state.t+=dt;
+  update(dt);updateCam(dt);draw(state.t);
+  requestAnimationFrame(loop);
+}
+
+/* ================= boot ================= */
+resize();buildClassic();updateHud();
+cam.x=clamp(player.x-W/scale*(W>720?.66:.5),0,Math.max(0,WORLD.w-W/scale));
+cam.y=clamp(player.y-H/scale*.55,0,Math.max(0,WORLD.h-H/scale));
+requestAnimationFrame(t=>{last=t;loop(t);});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawSpark);
+})();
+</script>
+</body>
+</html>
